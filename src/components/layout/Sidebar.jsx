@@ -5,6 +5,7 @@ function Sidebar({ isOpen, onClose }) {
 
     const menuItems = [
         { label: "Dashboard", path: "/dashboard", icon: "bi-speedometer2" },
+        { label: "Users", path: "/users", icon: "bi-people" },
         { label: "Products", path: "/products", icon: "bi-box-seam" },
         { label: "Stock", path: "/stock", icon: "bi-boxes" },
         { label: "Purchases", path: "/purchases", icon: "bi-cart-check" },
