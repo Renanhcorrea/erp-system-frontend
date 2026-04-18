@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { createUser, getUserById, updateUser } from "../services/userService";
+import { createUser, getUserById, normalizePhoneForApi, updateUser } from "../services/userService";
 
 function UserFormPage() {
     const { id } = useParams();
@@ -62,11 +62,14 @@ function UserFormPage() {
         const payload = {
             userName: formData.userName.trim(),
             userSurname: formData.userSurname.trim(),
-            phoneNumber: formData.phoneNumber.trim(),
-            password: formData.password,
+            phoneNumber: normalizePhoneForApi(formData.phoneNumber),
             email: formData.email.trim(),
             role: formData.role
         };
+
+        if (!isEditMode || formData.password.trim()) {
+            payload.password = formData.password;
+        }
 
         try {
             if (isEditMode) {
@@ -154,7 +157,7 @@ function UserFormPage() {
 
                         <div className="col-md-6">
                             <label className="form-label">
-                                Password {isEditMode && <span className="text-muted">(required by current backend)</span>}
+                                Password {isEditMode && <span className="text-muted">(optional on edit)</span>}
                             </label>
                             <input
                                 type="password"
@@ -162,7 +165,7 @@ function UserFormPage() {
                                 name="password"
                                 value={formData.password}
                                 onChange={handleChange}
-                                required
+                                required={!isEditMode}
                             />
                         </div>
 

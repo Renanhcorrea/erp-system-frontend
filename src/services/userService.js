@@ -1,6 +1,20 @@
 import api from "./api";
 
-// DTOs
+const normalizeText = (value) => value?.trim().toLowerCase() || "";
+
+export const normalizePhoneForApi = (phone) => {
+    const digitsOnly = (phone || "").replace(/\D/g, "");
+    return digitsOnly.startsWith("0") ? digitsOnly.slice(1) : digitsOnly;
+};
+
+const normalizeUserPayload = (userDTO) => ({
+    ...userDTO,
+    userName: normalizeText(userDTO.userName),
+    userSurname: normalizeText(userDTO.userSurname),
+    email: normalizeText(userDTO.email),
+    phoneNumber: normalizePhoneForApi(userDTO.phoneNumber)
+});
+
 export const getAllUsers = async (page = 0, size = 10) => {
     try {
         const response = await api.get(`/users?page=${page}&size=${size}`);
@@ -10,6 +24,35 @@ export const getAllUsers = async (page = 0, size = 10) => {
         throw error;
     }
 }
+
+export const searchUsers = async ({
+    userName = "",
+    userSurname = "",
+    phone = "",
+    role = "",
+    page = 0,
+    size = 10,
+    sort = ""
+} = {}) => {
+    try {
+        const params = new URLSearchParams();
+
+        if (userName.trim()) params.set("userName", userName.trim().toLowerCase());
+        if (userSurname.trim()) params.set("userSurname", userSurname.trim().toLowerCase());
+        if (phone.trim()) params.set("phone", normalizePhoneForApi(phone));
+        if (role.trim()) params.set("role", role.trim());
+
+        params.set("page", String(page));
+        params.set("size", String(size));
+        if (sort.trim()) params.set("sort", sort.trim());
+
+        const response = await api.get(`/users/search?${params.toString()}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error searching users:", error);
+        throw error;
+    }
+};
 
 export const getUserById = async (id) => {
     try {
@@ -89,7 +132,8 @@ export const searchUsersByPhone = async (phoneNumber, page = 0, size = 10) => {
 
 export const createUser = async (userDTO) => {
     try {
-        const response = await api.post("/users", userDTO);
+        const payload = normalizeUserPayload(userDTO);
+        const response = await api.post("/users", payload);
         return response.data;
     } catch (error) {
         console.error("Error creating user:", error);
@@ -99,7 +143,22 @@ export const createUser = async (userDTO) => {
 
 export const updateUser = async (id, userDTO) => {
     try {
-        const response = await api.put(`/users/${id}`, userDTO);
+        const normalizedPayload = normalizeUserPayload(userDTO);
+
+        const payload = {
+            userName: normalizedPayload.userName,
+            userSurname: normalizedPayload.userSurname,
+            phoneNumber: normalizedPayload.phoneNumber,
+            email: normalizedPayload.email,
+            role: normalizedPayload.role,
+            active: normalizedPayload.active
+        };
+
+        if (userDTO.password && userDTO.password.trim()) {
+            payload.password = userDTO.password;
+        }
+
+        const response = await api.put(`/users/${id}`, payload);
         return response.data;
     } catch (error) {
         console.error(`Error updating user with id ${id}:`, error);

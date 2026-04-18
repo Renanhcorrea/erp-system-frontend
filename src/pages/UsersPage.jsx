@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { deleteUser, getAllUsers } from '../services/userService';
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { deleteUser, searchUsers } from "../services/userService";
 
 function UsersPage() {
     const [users, setUsers] = useState([]);
-    const [pageData, setPageData] = useState({ 
-        number: 0, 
-        size: 10, 
+    const [pageData, setPageData] = useState({
+        number: 0,
+        size: 10,
         totalPages: 0, 
         totalElements: 0
     });
@@ -18,16 +18,26 @@ function UsersPage() {
     const [filterSurname, setFilterSurname] = useState("");
     const [filterPhone, setFilterPhone] = useState("");
     const [filterRole, setFilterRole] = useState("");
-    const [filterActive, setFilterActive] = useState("");
 
     const navigate = useNavigate();
 
-    const fetchUsers = async (page = 0) => {
+    const fetchUsers = async (page = 0, filters = null) => {
         try {
             setLoading(true);
             setError(null);
 
-            const data = await getAllUsers(page, 10);
+            const currentFilters = filters || {
+                userName: filterName,
+                userSurname: filterSurname,
+                phone: filterPhone,
+                role: filterRole
+            };
+
+            const data = await searchUsers({
+                ...currentFilters,
+                page,
+                size: 10
+            });
 
             setUsers(data.content || []);
             setPageData({
@@ -43,6 +53,7 @@ function UsersPage() {
             setLoading(false);
         }
     };
+
     useEffect(() => {
         fetchUsers(0);
     }, []);
@@ -66,23 +77,6 @@ function UsersPage() {
             setError("Failed to delete user: " + (error.response?.data?.message || error.message));
         }
     };
-
-    const filteredUsers = useMemo(() => {
-        return users.filter((user) => {
-            const matchesName = user.userName?.toLowerCase().includes(filterName.toLowerCase());
-            const matchesSurname = user.userSurname?.toLowerCase().includes(filterSurname.toLowerCase());
-            const matchesPhone = user.phoneNumber?.toLowerCase().includes(filterPhone.toLowerCase());
-            const matchesRole = filterRole ? user.role === filterRole : true;
-            const matchesActive =
-                filterActive === ""
-                    ? true
-                    : filterActive === "true"
-                    ? user.active === true
-                    : user.active === false;
-
-            return matchesName && matchesSurname && matchesPhone && matchesRole && matchesActive;
-        });
-    }, [users, filterName, filterSurname, filterPhone, filterRole, filterActive]);
 
     if (loading) {
         return (
@@ -154,15 +148,19 @@ function UsersPage() {
                     </div>
 
                     <div className="col-12 col-md-1">
-                        <select
-                            className="form-select"
-                            value={filterActive}
-                            onChange={(e) => setFilterActive(e.target.value)}
+                        <button
+                            className="btn btn-primary w-100"
+                            onClick={() =>
+                                fetchUsers(0, {
+                                    userName: filterName,
+                                    userSurname: filterSurname,
+                                    phone: filterPhone,
+                                    role: filterRole
+                                })
+                            }
                         >
-                            <option value="">All</option>
-                            <option value="true">Active</option>
-                            <option value="false">Inactive</option>
-                        </select>
+                            Search
+                        </button>
                     </div>
 
                     <div className="col-12 col-md-1">
@@ -173,7 +171,12 @@ function UsersPage() {
                                 setFilterSurname("");
                                 setFilterPhone("");
                                 setFilterRole("");
-                                setFilterActive("");
+                                fetchUsers(0, {
+                                    userName: "",
+                                    userSurname: "",
+                                    phone: "",
+                                    role: ""
+                                });
                             }}
                         >
                             Clear
@@ -182,7 +185,7 @@ function UsersPage() {
                 </div>
             </div>
 
-            {filteredUsers.length === 0 ? (
+            {users.length === 0 ? (
                 <p className="text-muted">No users found.</p>
             ) : (
                 <div className="table-responsive">
@@ -200,7 +203,7 @@ function UsersPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredUsers.map((user) => (
+                            {users.map((user) => (
                                 <tr key={user.id}>
                                     <td>{user.id}</td>
                                     <td>{user.userName}</td>
