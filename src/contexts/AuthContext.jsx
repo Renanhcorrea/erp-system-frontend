@@ -12,11 +12,13 @@ export function AuthProvider({ children }) {
     });
 
     const login = (userData, email, password) => {
-        const credentials = btoa(unescape(encodeURIComponent(`${email}:${password}`)));
+        const credentials = btoa(`${email}:${password}`);
 
         const fullUser = { 
             ...userData,
-             email };
+            email: userData.email || email
+        };
+
         setUser(fullUser);
 
         localStorage.setItem("erp_user", JSON.stringify(fullUser));

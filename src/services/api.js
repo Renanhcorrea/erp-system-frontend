@@ -12,16 +12,27 @@ api.interceptors.request.use((config) => {
         config.headers.Authorization = `Basic ${credentials}`;
     }
     return config;
-});
+}, 
+    (error) => {
+    return Promise.reject(error); 
+    }
+);
 
 api.interceptors.response.use(
     (response) => response,
     (error) => {
+        console.error("API ERROR:", {
+            url: error.config?.url,
+            status: error.response?.status,
+            data: error.response?.data
+        });
+
         if (error.response?.status === 401) {
             localStorage.removeItem("erp_user");
             localStorage.removeItem("erp_credentials");
             window.location.href = "/login";
         }
+
         return Promise.reject(error);
     }
 );
