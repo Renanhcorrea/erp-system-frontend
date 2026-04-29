@@ -35,7 +35,7 @@ function ProductFormPage() {
                     price: data.price || "",
                     quantity: data.quantity || "",
                     unit: data.unit || "",
-                    type: data.type || "SCREW"
+                    type: data.type || "Screw"
                 });
             } catch (error) {
                 console.error("Error loading product:", error);
