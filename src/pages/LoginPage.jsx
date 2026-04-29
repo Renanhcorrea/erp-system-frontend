@@ -20,7 +20,7 @@ function LoginPage() {
         try {
             const normalizedEmail = email.trim().toLowerCase();
             const userData = await loginUser(normalizedEmail, password);
-            login(userData, normalizedEmail, password);
+            login(userData);
             navigate("/dashboard");
         } catch (err) {
             if (err.response?.status === 401) {

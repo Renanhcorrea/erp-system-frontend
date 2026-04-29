@@ -11,24 +11,22 @@ export function AuthProvider({ children }) {
         }
     });
 
-    const login = (userData, email, password) => {
-        const credentials = btoa(`${email}:${password}`);
-
-        const fullUser = { 
-            ...userData,
-            email: userData.email || email
+    const login = (userData) => {
+        const userObject = {
+            id: userData.userID,
+            email: userData.email,
+            role: userData.role
         };
 
-        setUser(fullUser);
-
-        localStorage.setItem("erp_user", JSON.stringify(fullUser));
-        localStorage.setItem("erp_credentials", credentials);
+        setUser(userObject);
+        localStorage.setItem("erp_user", JSON.stringify(userObject));
+        localStorage.setItem("erp_token", userData.token);
     };
 
     const logout = () => {
         setUser(null);
         localStorage.removeItem("erp_user");
-        localStorage.removeItem("erp_credentials");
+        localStorage.removeItem("erp_token");
         window.location.href = "/login";
     };
 

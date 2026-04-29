@@ -7,6 +7,7 @@ function ProductsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const [filterSku, setFilterSku] = useState("");
     const [filterName, setFilterName] = useState("");
     const [filterType, setFilterType] = useState("");
     const [filterUnit, setFilterUnit] = useState("");
@@ -52,6 +53,7 @@ function ProductsPage() {
 
     const filteredProducts = useMemo(() => {
         return products.filter((product) => {
+            const matchesSku = (product.sku || "").toLowerCase().includes(filterSku.toLowerCase());
             const matchesName = product.name?.toLowerCase().includes(filterName.toLowerCase());
             const matchesType = filterType ? product.type === filterType : true;
             const matchesUnit = product.unit?.toLowerCase().includes(filterUnit.toLowerCase());
@@ -62,9 +64,9 @@ function ProductsPage() {
                     ? product.active === true
                     : product.active === false;
 
-            return matchesName && matchesType && matchesUnit && matchesActive;
+            return matchesSku && matchesName && matchesType && matchesUnit && matchesActive;
         });
-    }, [products, filterName, filterType, filterUnit, filterActive]);
+    }, [products, filterSku, filterName, filterType, filterUnit, filterActive]);
 
     if (loading) {
         return (
@@ -88,6 +90,16 @@ function ProductsPage() {
             <div className="card p-3 mb-4">
                 <h5 className="mb-3">Filters</h5>
                 <div className="row g-3">
+                    <div className="col-md-2">
+                        <input
+                            type="text"
+                            className="form-control"
+                            placeholder="SKU"
+                            value={filterSku}
+                            onChange={(e) => setFilterSku(e.target.value)}
+                        />
+                    </div>
+
                     <div className="col-md-3">
                         <input
                             type="text"
@@ -137,6 +149,7 @@ function ProductsPage() {
                         <button
                             className="btn btn-outline-secondary w-100"
                             onClick={() => {
+                                setFilterSku("");
                                 setFilterName("");
                                 setFilterType("");
                                 setFilterUnit("");
@@ -157,6 +170,7 @@ function ProductsPage() {
             <thead className="table-dark">
                 <tr>
                     <th>ID</th>
+                    <th>SKU</th>
                     <th>Name</th>
                     <th>Price</th>
                     <th>Stock</th>
@@ -170,6 +184,7 @@ function ProductsPage() {
                 {filteredProducts.map((p) => (
                     <tr key={p.id}>
                         <td>{p.id}</td>
+                        <td>{p.sku || "-"}</td>
                         <td>{p.name}</td>
                         <td>€{Number(p.price).toFixed(2)}</td>
                         <td>{p.quantity}</td>

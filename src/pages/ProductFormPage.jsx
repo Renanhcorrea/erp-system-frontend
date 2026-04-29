@@ -8,12 +8,13 @@ function ProductFormPage() {
     const isEditMode = Boolean(id);
 
     const [formData, setFormData] = useState({
+        sku: "",
         name: "",
         description: "",
         price: "",
         quantity: "",
         unit: "",
-        type: "Screw"
+        type: "SCREW"
     });
 
     const [loading, setLoading] = useState(false);
@@ -28,12 +29,13 @@ function ProductFormPage() {
                 const data = await getProductById(id);
 
                 setFormData({
+                    sku: data.sku || "",
                     name: data.name || "",
                     description: data.description || "",
                     price: data.price || "",
                     quantity: data.quantity || "",
                     unit: data.unit || "",
-                    type: data.type || "Screw"
+                    type: data.type || "SCREW"
                 });
             } catch (error) {
                 console.error("Error loading product:", error);
@@ -59,6 +61,7 @@ function ProductFormPage() {
         setError(null);
 
         const payload = {
+            sku: formData.sku.trim(),
             name: formData.name.trim(),
             description: formData.description.trim(),
             price: Number(formData.price),
@@ -103,6 +106,18 @@ function ProductFormPage() {
             <div className="card p-4">
                 <form onSubmit={handleSubmit}>
                     <div className="row g-3">
+                        <div className="col-md-5">
+                            <label className="form-label">SKU</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                name="sku"
+                                value={formData.sku}
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
+
                         <div className="col-md-5">
                             <label className="form-label">Name</label>
                             <input
