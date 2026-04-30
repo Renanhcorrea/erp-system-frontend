@@ -7,9 +7,9 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-    const credentials = localStorage.getItem("erp_credentials");
-    if (credentials) {
-        config.headers.Authorization = `Basic ${credentials}`;
+    const token = localStorage.getItem("erp_token");
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
 }, 
@@ -29,7 +29,7 @@ api.interceptors.response.use(
 
         if (error.response?.status === 401) {
             localStorage.removeItem("erp_user");
-            localStorage.removeItem("erp_credentials");
+            localStorage.removeItem("erp_token");
             window.location.href = "/login";
         }
 
