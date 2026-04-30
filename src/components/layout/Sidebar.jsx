@@ -1,19 +1,26 @@
 import { Link, useLocation } from "react-router-dom";
+import useAuth from "../../hooks/useAuth";
+import { hasAccess } from "../../utils/roleAccess";
+
+const ALL_MENU_ITEMS = [
+    { label: "Dashboard",  path: "/dashboard",  icon: "bi-speedometer2", section: "dashboard"  },
+    { label: "Products",   path: "/products",   icon: "bi-box-seam",     section: "products"   },
+    { label: "Stock",      path: "/stock",       icon: "bi-boxes",        section: "stock"      },
+    { label: "Purchases",  path: "/purchases",   icon: "bi-cart-check",   section: "purchases"  },
+    { label: "Sales",      path: "/sales",       icon: "bi-bag-check",    section: "sales"      },
+    { label: "Suppliers",  path: "/suppliers",   icon: "bi-truck",        section: "suppliers"  },
+    { label: "Finance",    path: "/finance",     icon: "bi-cash-stack",   section: "finance"    },
+    { label: "Users",      path: "/users",       icon: "bi-people",       section: "users"      },
+    { label: "Settings",   path: "/settings",    icon: "bi-gear",         section: "settings"   }
+];
 
 function Sidebar({ isOpen, onClose }) {
     const location = useLocation();
+    const { user } = useAuth();
 
-    const menuItems = [
-        { label: "Dashboard", path: "/dashboard", icon: "bi-speedometer2" },
-        { label: "Users", path: "/users", icon: "bi-people" },
-        { label: "Products", path: "/products", icon: "bi-box-seam" },
-        { label: "Stock", path: "/stock", icon: "bi-boxes" },
-        { label: "Purchases", path: "/purchases", icon: "bi-cart-check" },
-        { label: "Sales", path: "/sales", icon: "bi-bag-check" },
-        { label: "Suppliers", path: "/suppliers", icon: "bi-truck" },
-        { label: "Finance", path: "/finance", icon: "bi-cash-stack" },
-        { label: "Settings", path: "/settings", icon: "bi-gear" }
-    ];
+    const menuItems = ALL_MENU_ITEMS.filter((item) =>
+        hasAccess(user?.role, item.section)
+    );
 
     return (
         <aside className={`erp-sidebar ${isOpen ? "open" : ""}`}>
@@ -23,7 +30,8 @@ function Sidebar({ isOpen, onClose }) {
 
             <nav className="erp-sidebar-nav">
                 {menuItems.map((item) => {
-                    const isActive = location.pathname === item.path;
+                    const isActive = location.pathname === item.path ||
+                        (item.path !== "/dashboard" && location.pathname.startsWith(item.path));
 
                     return (
                         <Link
