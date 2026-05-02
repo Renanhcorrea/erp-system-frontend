@@ -1,8 +1,10 @@
 import api from "./api";
 
 // DTOs
-export const getAllProducts = async () => {
-    const response = await api.get("/products");
+export const getAllProducts = async (page = 0, size = 10) => {
+    const response = await api.get("/products", {
+        params: { page, size }
+    });
     return response.data; 
 }
 
