@@ -4,13 +4,6 @@ import { deleteProduct, getAllProducts } from "../services/productService";
 
 function ProductsPage() {
     const [products, setProducts] = useState([]);
-    const [pageData, setPageData] = useState({
-        number: 0,
-        size: 10,
-        totalPages: 0,
-        totalElements: 0
-    });
-
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -22,41 +15,23 @@ function ProductsPage() {
 
     const navigate = useNavigate();
 
-    const fetchProducts = async (page = 0) => {
-        try {
-            setLoading(true);
-            setError(null);
-
-            const data = await getAllProducts(page, 10);
-
-            if (Array.isArray(data)) {
-                setProducts(data);
-                setPageData({
-                    number: 0,
-                    size: data.length || 10,
-                    totalPages: 1,
-                    totalElements: data.length
-                });
-                return;
-            }
-
-            setProducts(data.content || []);
-            setPageData({
-                number: data.number ?? 0,
-                size: data.size ?? 10,
-                totalPages: data.totalPages ?? 0,
-                totalElements: data.totalElements ?? 0
-            });
-        } catch (error) {
-            console.error("Error loading products:", error);
-            setError("Failed to load products: " + (error.response?.data?.message || error.message));
-        } finally {
-            setLoading(false);
-        }
-    };
 
     useEffect(() => {
-        fetchProducts(0);
+        const fetchProducts = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const data = await getAllProducts();
+                setProducts(data || []);
+            } catch (error) {
+                console.error("Error loading products:", error);
+                setError("Failed to load products: " + error.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        fetchProducts();
     }, []);
 
      const handleDelete = async (id, name) => {

@@ -33,9 +33,9 @@ function AppRoutes() {
                     <Route path="/products/edit/:id" element={<ProtectedRoute section="products"><ProductFormPage /></ProtectedRoute>} />
 
 
-                    {/* <Route path="/users" element={<ProtectedRoute section="users"><UsersPage /></ProtectedRoute>} /> */}
-                    {/* <Route path="/users/new" element={<ProtectedRoute section="users"><UserFormPage /></ProtectedRoute>} /> */}
-                    {/* <Route path="/users/edit/:id" element={<ProtectedRoute section="users"><UserFormPage /></ProtectedRoute>} /> */}
+                    { <Route path="/users" element={<ProtectedRoute section="users"><UsersPage /></ProtectedRoute>} />}
+                    { <Route path="/users/new" element={<ProtectedRoute section="users"><UserFormPage /></ProtectedRoute>} />}
+                    { <Route path="/users/edit/:id" element={<ProtectedRoute section="users"><UserFormPage /></ProtectedRoute>} />}
 
                     {/* Routes below are disabled for now until the pages are implemented */}
                     {/* <Route path="/stock" element={<ProtectedRoute section="stock"><PlaceholderPage title="Stock" /></ProtectedRoute>} /> */}

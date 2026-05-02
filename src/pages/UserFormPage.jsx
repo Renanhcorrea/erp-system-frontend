@@ -68,7 +68,7 @@ function UserFormPage() {
         };
 
         if (!isEditMode || formData.password.trim()) {
-            payload.password = formData.password;
+            payload.password = formData.password.trim();
         }
 
         try {
@@ -81,7 +81,7 @@ function UserFormPage() {
             navigate("/users");
         } catch (error) {
             console.error("Error saving user:", error);
-            setError(error.response?.data?.message || "Failed to save user.");
+            setError("Failed to save user: " + (error.response?.data?.message || error.message));
         }
     };
 
@@ -107,7 +107,7 @@ function UserFormPage() {
             <div className="card p-4">
                 <form onSubmit={handleSubmit}>
                     <div className="row g-3">
-                        <div className="col-md-6">
+                        <div className="col-md-5">
                             <label className="form-label">First Name</label>
                             <input
                                 type="text"
@@ -119,7 +119,7 @@ function UserFormPage() {
                             />
                         </div>
 
-                        <div className="col-md-6">
+                        <div className="col-md-5">
                             <label className="form-label">Surname</label>
                             <input
                                 type="text"
@@ -131,7 +131,7 @@ function UserFormPage() {
                             />
                         </div>
 
-                        <div className="col-md-6">
+                        <div className="col-md-7">
                             <label className="form-label">Email</label>
                             <input
                                 type="email"
@@ -143,7 +143,7 @@ function UserFormPage() {
                             />
                         </div>
 
-                        <div className="col-md-6">
+                        <div className="col-md-3">
                             <label className="form-label">Phone Number</label>
                             <input
                                 type="text"
@@ -155,7 +155,7 @@ function UserFormPage() {
                             />
                         </div>
 
-                        <div className="col-md-6">
+                        <div className="col-md-4">
                             <label className="form-label">
                                 Password {isEditMode && <span className="text-muted">(optional on edit)</span>}
                             </label>
@@ -169,7 +169,7 @@ function UserFormPage() {
                             />
                         </div>
 
-                        <div className="col-md-6">
+                        <div className="col-md-3">
                             <label className="form-label">Role</label>
                             <select
                                 className="form-select"

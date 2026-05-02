@@ -1,45 +1,50 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { deleteUser, searchUsers } from "../services/userService";
 
+const INITIAL_FILTERS = {
+    userName: "",
+    userSurname: "",
+    phone: "",
+    role: "",
+    email: "",
+    status: "",
+    keyword: ""
+};
+
 function UsersPage() {
     const [users, setUsers] = useState([]);
+    const [filters, setFilters] = useState(INITIAL_FILTERS);
+    const [appliedFilters, setAppliedFilters] = useState(INITIAL_FILTERS);
+
     const [pageData, setPageData] = useState({
         number: 0,
         size: 10,
-        totalPages: 0, 
+        totalPages: 0,
         totalElements: 0
     });
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const [filterName, setFilterName] = useState("");
-    const [filterSurname, setFilterSurname] = useState("");
-    const [filterPhone, setFilterPhone] = useState("");
-    const [filterRole, setFilterRole] = useState("");
-
     const navigate = useNavigate();
 
-    const fetchUsers = async (page = 0, filters = null) => {
+    const fetchUsers = async (page = 0, currentFilters = appliedFilters) => {
         try {
             setLoading(true);
             setError(null);
 
-            const currentFilters = filters || {
-                userName: filterName,
-                userSurname: filterSurname,
-                phone: filterPhone,
-                role: filterRole
-            };
-
             const data = await searchUsers({
-                ...currentFilters,
+                userName: currentFilters.userName,
+                userSurname: currentFilters.userSurname,
+                phone: currentFilters.phone,
+                role: currentFilters.role,
                 page,
                 size: 10
             });
 
             setUsers(data.content || []);
+            setAppliedFilters(currentFilters);
             setPageData({
                 number: data.number ?? 0,
                 size: data.size ?? 10,
@@ -55,8 +60,83 @@ function UsersPage() {
     };
 
     useEffect(() => {
-        fetchUsers(0);
+        const loadUsers = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+
+                const data = await searchUsers({
+                    page: 0,
+                    size: 10
+                });
+
+                setUsers(data.content || []);
+                setAppliedFilters(INITIAL_FILTERS);
+                setPageData({
+                    number: data.number ?? 0,
+                    size: data.size ?? 10,
+                    totalPages: data.totalPages ?? 0,
+                    totalElements: data.totalElements ?? 0
+                });
+            } catch (error) {
+                console.error("Error loading users:", error);
+                setError("Failed to load users: " + (error.response?.data?.message || error.message));
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadUsers();
     }, []);
+
+    const filteredUsers = useMemo(() => {
+        return users.filter((user) => {
+            const name = (user.userName || "").toLowerCase();
+            const surname = (user.userSurname || "").toLowerCase();
+            const email = (user.email || "").toLowerCase();
+            const phone = (user.phoneNumber || "").toLowerCase();
+            const role = (user.role || "").toLowerCase();
+
+            const keyword = appliedFilters.keyword.trim().toLowerCase();
+            const emailFilter = appliedFilters.email.trim().toLowerCase();
+
+            const matchesKeyword =
+                !keyword ||
+                name.includes(keyword) ||
+                surname.includes(keyword) ||
+                email.includes(keyword) ||
+                phone.includes(keyword) ||
+                role.includes(keyword);
+
+            const matchesEmail = !emailFilter || email.includes(emailFilter);
+
+            const matchesStatus =
+                appliedFilters.status === ""
+                    ? true
+                    : appliedFilters.status === "active"
+                    ? user.active === true
+                    : user.active === false;
+
+            return matchesKeyword && matchesEmail && matchesStatus;
+        });
+    }, [users, appliedFilters]);
+
+    const handleFilterChange = (event) => {
+        const { name, value } = event.target;
+        setFilters((prev) => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleSearch = () => {
+        fetchUsers(0, filters);
+    };
+
+    const handleClear = () => {
+        setFilters(INITIAL_FILTERS);
+        fetchUsers(0, INITIAL_FILTERS);
+    };
 
     const handleDelete = async (id, name, surname) => {
         const confirmed = window.confirm(
@@ -80,16 +160,16 @@ function UsersPage() {
 
     if (loading) {
         return (
-            <div className="container-fluid mt-4">
+            <div className="container mt-5">
                 <p>Loading users...</p>
             </div>
         );
     }
 
     return (
-        <div className="container-fluid mt-5">
+        <div className="container mt-5">
             <div className="d-flex justify-content-between align-items-center mb-4">
-                <h1 className="mb-0">Users Management</h1>
+                <h1>Users Management</h1>
                 <Link to="/users/new" className="btn btn-primary">
                     Add New User
                 </Link>
@@ -101,41 +181,67 @@ function UsersPage() {
                 <h5 className="mb-3">Filters</h5>
 
                 <div className="row g-3">
-                    <div className="col-12 col-md-3">
+                    <div className="col-md-2">
                         <input
                             type="text"
                             className="form-control"
+                            name="keyword"
+                            placeholder="Keyword"
+                            value={filters.keyword}
+                            onChange={handleFilterChange}
+                        />
+                    </div>
+
+                    <div className="col-md-2">
+                        <input
+                            type="text"
+                            className="form-control"
+                            name="userName"
                             placeholder="First name"
-                            value={filterName}
-                            onChange={(e) => setFilterName(e.target.value)}
+                            value={filters.userName}
+                            onChange={handleFilterChange}
                         />
                     </div>
 
-                    <div className="col-12 col-md-3">
+                    <div className="col-md-2">
                         <input
                             type="text"
                             className="form-control"
+                            name="userSurname"
                             placeholder="Surname"
-                            value={filterSurname}
-                            onChange={(e) => setFilterSurname(e.target.value)}
+                            value={filters.userSurname}
+                            onChange={handleFilterChange}
                         />
                     </div>
 
-                    <div className="col-12 col-md-2">
+                    <div className="col-md-2">
+                        <input
+                            type="email"
+                            className="form-control"
+                            name="email"
+                            placeholder="Email"
+                            value={filters.email}
+                            onChange={handleFilterChange}
+                        />
+                    </div>
+
+                    <div className="col-md-2">
                         <input
                             type="text"
                             className="form-control"
+                            name="phone"
                             placeholder="Phone"
-                            value={filterPhone}
-                            onChange={(e) => setFilterPhone(e.target.value)}
+                            value={filters.phone}
+                            onChange={handleFilterChange}
                         />
                     </div>
 
-                    <div className="col-12 col-md-2">
+                    <div className="col-md-2">
                         <select
                             className="form-select"
-                            value={filterRole}
-                            onChange={(e) => setFilterRole(e.target.value)}
+                            name="role"
+                            value={filters.role}
+                            onChange={handleFilterChange}
                         >
                             <option value="">All roles</option>
                             <option value="ADMIN">Admin</option>
@@ -147,37 +253,32 @@ function UsersPage() {
                         </select>
                     </div>
 
-                    <div className="col-12 col-md-1">
+                    <div className="col-md-2">
+                        <select
+                            className="form-select"
+                            name="status"
+                            value={filters.status}
+                            onChange={handleFilterChange}
+                        >
+                            <option value="">All status</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+
+                    <div className="col-md-1">
                         <button
                             className="btn btn-primary w-100"
-                            onClick={() =>
-                                fetchUsers(0, {
-                                    userName: filterName,
-                                    userSurname: filterSurname,
-                                    phone: filterPhone,
-                                    role: filterRole
-                                })
-                            }
+                            onClick={handleSearch}
                         >
                             Search
                         </button>
                     </div>
 
-                    <div className="col-12 col-md-1">
+                    <div className="col-md-1">
                         <button
                             className="btn btn-outline-secondary w-100"
-                            onClick={() => {
-                                setFilterName("");
-                                setFilterSurname("");
-                                setFilterPhone("");
-                                setFilterRole("");
-                                fetchUsers(0, {
-                                    userName: "",
-                                    userSurname: "",
-                                    phone: "",
-                                    role: ""
-                                });
-                            }}
+                            onClick={handleClear}
                         >
                             Clear
                         </button>
@@ -185,7 +286,7 @@ function UsersPage() {
                 </div>
             </div>
 
-            {users.length === 0 ? (
+            {filteredUsers.length === 0 ? (
                 <p className="text-muted">No users found.</p>
             ) : (
                 <div className="table-responsive">
@@ -203,7 +304,7 @@ function UsersPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {users.map((user) => (
+                            {filteredUsers.map((user) => (
                                 <tr key={user.id}>
                                     <td>{user.id}</td>
                                     <td>{user.userName}</td>
@@ -247,7 +348,7 @@ function UsersPage() {
                     <button
                         className="btn btn-outline-secondary btn-sm"
                         disabled={pageData.number === 0}
-                        onClick={() => fetchUsers(pageData.number - 1)}
+                        onClick={() => fetchUsers(pageData.number - 1, appliedFilters)}
                     >
                         Previous
                     </button>
@@ -259,7 +360,7 @@ function UsersPage() {
                     <button
                         className="btn btn-outline-secondary btn-sm"
                         disabled={pageData.number + 1 >= pageData.totalPages}
-                        onClick={() => fetchUsers(pageData.number + 1)}
+                        onClick={() => fetchUsers(pageData.number + 1, appliedFilters)}
                     >
                         Next
                     </button>
