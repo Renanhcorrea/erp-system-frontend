@@ -6,6 +6,35 @@ const api = axios.create({
     baseURL: `${BASE_URL}/api`
 });
 
+const getErrorMessage = (error) => {
+    const data = error?.response?.data;
+
+    if (typeof data === "string") {
+        return data;
+    }
+
+    return data?.message || data?.error || null;
+};
+
+export const getFriendlyApiError = (error, fallback = "Unexpected error. Please try again.") => {
+    const status = error?.response?.status;
+    const backendMessage = getErrorMessage(error);
+
+    if (status === 400) {
+        return backendMessage || "Invalid request data. Please review the form and try again.";
+    }
+
+    if (status === 401) {
+        return "Your session expired. Please sign in again.";
+    }
+
+    if (status === 403) {
+        return "You do not have permission to perform this action.";
+    }
+
+    return backendMessage || error?.message || fallback;
+};
+
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem("erp_token");
     if (token) {

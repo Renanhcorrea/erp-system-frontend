@@ -5,7 +5,6 @@ import { hasAccess } from "../../utils/roleAccess";
 const ALL_MENU_ITEMS = [
     { label: "Dashboard",  path: "/dashboard",  icon: "bi-speedometer2", section: "dashboard"  },
     { label: "Products",   path: "/products",   icon: "bi-box-seam",     section: "products"   },
-    { label: "Stock",      path: "/stock",       icon: "bi-boxes",        section: "stock"      },
     { label: "Purchases",  path: "/purchases",   icon: "bi-cart-check",   section: "purchases"  },
     { label: "Sales",      path: "/sales",       icon: "bi-bag-check",    section: "sales"      },
     { label: "Suppliers",  path: "/suppliers",   icon: "bi-truck",        section: "suppliers"  },
