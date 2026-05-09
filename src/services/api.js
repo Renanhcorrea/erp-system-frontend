@@ -59,7 +59,7 @@ api.interceptors.response.use(
         if (error.response?.status === 401) {
             localStorage.removeItem("erp_user");
             localStorage.removeItem("erp_token");
-            window.location.href = "/login";
+            window.location.href = "/erp-system-frontend/login";
         }
 
         return Promise.reject(error);
