@@ -1,9 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { deleteProduct, getAllProducts } from "../services/productService";
+import { getFriendlyApiError } from "../services/api";
+import { getProductStock } from "../services/stockService";
 
 function ProductsPage() {
     const [products, setProducts] = useState([]);
+    const [stocksByProduct, setStocksByProduct] = useState({});
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -15,26 +19,58 @@ function ProductsPage() {
 
     const navigate = useNavigate();
 
+    const fetchStockMap = async (list) => {
+        const entries = await Promise.all(
+            list.map(async (product) => {
+                try {
+                    const stock = await getProductStock(product.id);
+                    return [product.id, stock];
+                } catch {
+                    return [
+                        product.id,
+                        {
+                            productId: product.id,
+                            availableQuantity: Number(product.availableQuantity ?? product.quantity ?? 0),
+                            reservedQuantity: Number(product.reservedQuantity ?? 0),
+                            updatedAt: null
+                        }
+                    ];
+                }
+            })
+        );
 
-    useEffect(() => {
-        const fetchProducts = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                const data = await getAllProducts();
-                setProducts(data || []);
-            } catch (error) {
-                console.error("Error loading products:", error);
-                setError("Failed to load products: " + error.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-        
-        fetchProducts();
+        return Object.fromEntries(entries);
+    };
+
+    const loadProducts = useCallback(async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const data = await getAllProducts();
+            const normalizedProducts = Array.isArray(data) ? data : data?.content || [];
+
+            setProducts(normalizedProducts);
+
+            const stockMap = await fetchStockMap(normalizedProducts);
+            setStocksByProduct(stockMap);
+        } catch (requestError) {
+            console.error("Error loading products:", requestError);
+            setError(getFriendlyApiError(requestError, "Failed to load products."));
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
-     const handleDelete = async (id, name) => {
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            loadProducts();
+        }, 0);
+
+        return () => clearTimeout(timeoutId);
+    }, [loadProducts]);
+
+    const handleDelete = async (id, name) => {
         const confirmed = window.confirm(`Are you sure you want to delete/deactivate the product "${name}"?`);
         if (!confirmed) return;
 
@@ -45,27 +81,29 @@ function ProductsPage() {
                     product.id === id ? { ...product, active: false } : product
                 )
             );
-        } catch (error) {
-            console.error("Error deleting product:", error);
-            setError("Failed to delete product: " + error.message);
+        } catch (requestError) {
+            console.error("Error deleting product:", requestError);
+            setError(getFriendlyApiError(requestError, "Failed to delete product."));
         }
     };
 
     const filteredProducts = useMemo(() => {
-        return products.filter((product) => {
-            const matchesSku = (product.sku || "").toLowerCase().includes(filterSku.toLowerCase());
-            const matchesName = product.name?.toLowerCase().includes(filterName.toLowerCase());
-            const matchesType = filterType ? product.type === filterType : true;
-            const matchesUnit = product.unit?.toLowerCase().includes(filterUnit.toLowerCase());
-            const matchesActive =
-                filterActive === ""
-                    ? true
-                    : filterActive === "true"
-                    ? product.active === true
-                    : product.active === false;
+        return products
+            .filter((product) => {
+                const matchesSku = (product.sku || "").toLowerCase().includes(filterSku.toLowerCase());
+                const matchesName = product.name?.toLowerCase().includes(filterName.toLowerCase());
+                const matchesType = filterType ? product.type === filterType : true;
+                const matchesUnit = product.unit?.toLowerCase().includes(filterUnit.toLowerCase());
+                const matchesActive =
+                    filterActive === ""
+                        ? true
+                        : filterActive === "true"
+                        ? product.active === true
+                        : product.active === false;
 
-            return matchesSku && matchesName && matchesType && matchesUnit && matchesActive;
-        });
+                return matchesSku && matchesName && matchesType && matchesUnit && matchesActive;
+            })
+            .sort((a, b) => Number(a.id) - Number(b.id));
     }, [products, filterSku, filterName, filterType, filterUnit, filterActive]);
 
     if (loading) {
@@ -173,7 +211,8 @@ function ProductsPage() {
                     <th>SKU</th>
                     <th>Name</th>
                     <th>Price</th>
-                    <th>Stock</th>
+                    <th>Available</th>
+                    <th>Reserved</th>
                     <th>Unit</th>
                     <th>Type</th>
                     <th>Status</th>
@@ -187,7 +226,8 @@ function ProductsPage() {
                         <td>{p.sku || "-"}</td>
                         <td>{p.name}</td>
                         <td>€{Number(p.price).toFixed(2)}</td>
-                        <td>{p.quantity}</td>
+                        <td>{stocksByProduct[p.id]?.availableQuantity ?? Number(p.availableQuantity ?? p.quantity ?? 0)}</td>
+                        <td>{stocksByProduct[p.id]?.reservedQuantity ?? Number(p.reservedQuantity ?? 0)}</td>
                         <td>{p.unit}</td>
                         <td>{p.type}</td>
                         <td>
@@ -200,7 +240,7 @@ function ProductsPage() {
                                 className="btn btn-sm btn-warning me-2"
                                 onClick={() => navigate(`/products/edit/${p.id}`)}
                             >
-                                Edit
+                                {p.active ? "Edit" : "Edit"}
                             </button>
                             <button
                                 className="btn btn-sm btn-danger"
@@ -215,6 +255,7 @@ function ProductsPage() {
         </table>
     </div>
 )}
+
         </div>
     );
 }
