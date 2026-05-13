@@ -11,6 +11,8 @@ import SalesPage from "../pages/SalesPage";
 import SupplierPage from "../pages/SupplierPage";
 import FinancePage from "../pages/FinancePage";
 import SettingsPage from "../pages/SettingsPage";
+import WorkCenterPage from "../pages/WorkCenterPage";
+import WorkCenterFormPage from "../pages/WorkCenterFormPage";
 
 function AppRoutes() {
     return (
@@ -42,6 +44,10 @@ function AppRoutes() {
                     <Route path="/suppliers" element={<ProtectedRoute section="suppliers"><SupplierPage /></ProtectedRoute>} />
                     <Route path="/finance" element={<ProtectedRoute section="finance"><FinancePage /></ProtectedRoute>} />
                     <Route path="/settings" element={<ProtectedRoute section="settings"><SettingsPage /></ProtectedRoute>} />
+
+                    <Route path="/work-centers" element={<ProtectedRoute section="work-centers"><WorkCenterPage /></ProtectedRoute>} />
+                    <Route path="/work-centers/new" element={<ProtectedRoute section="work-centers"><WorkCenterFormPage /></ProtectedRoute>} />
+                    <Route path="/work-centers/:id/edit" element={<ProtectedRoute section="work-centers"><WorkCenterFormPage /></ProtectedRoute>} />
 
                 </Route>
             </Routes>

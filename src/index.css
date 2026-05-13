@@ -390,3 +390,52 @@ body {
 .erp-content small.text-muted {
   color: var(--erp-text-muted) !important;
 }
+
+.erp-content .products-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.erp-content .products-table th,
+.erp-content .products-table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.erp-content .products-table .col-id {
+  width: 6%;
+}
+
+.erp-content .products-table .col-sku {
+  width: 12%;
+}
+
+.erp-content .products-table .col-name {
+  width: 20%;
+}
+
+.erp-content .products-table .col-price {
+  width: 10%;
+}
+
+.erp-content .products-table .col-quantity {
+  width: 10%;
+}
+
+.erp-content .products-table .col-unit {
+  width: 8%;
+}
+
+.erp-content .products-table .col-type {
+  width: 14%;
+}
+
+.erp-content .products-table .col-status {
+  width: 8%;
+}
+
+.erp-content .products-table .col-actions {
+  width: 12%;
+}
