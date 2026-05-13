@@ -2,8 +2,21 @@ import { useEffect, useState } from "react";
 import { createProduct, getProductById, updateProduct } from "../services/productService";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { getFriendlyApiError } from "../services/api";
-import { executeStockAction, getProductStock } from "../services/stockService";
+import { executeStockAction, getProductStockBalance } from "../services/stockService";
 import { STOCK_ACTIONS } from "../types/stockTypes";
+
+const PRODUCT_TYPES = [
+    "SCREW",
+    "STEEL_SHEET",
+    "STEEL_TUBE",
+    "STAINLESS_STEEL_SHEET",
+    "STAINLESS_STEEL_TUBE",
+    "WELDING",
+    "PAINT",
+    "CUTTING",
+    "PRODUCTION",
+    "ASSEMBLY"
+];
 
 function ProductFormPage() {
     const { id } = useParams();
@@ -22,6 +35,7 @@ function ProductFormPage() {
         type: "SCREW",
         active: true
     });
+
     const [stockData, setStockData] = useState({
         availableQuantity: 0,
         reservedQuantity: 0
@@ -36,30 +50,44 @@ function ProductFormPage() {
 
             try {
                 setLoading(true);
+                setError(null);
+
                 const data = await getProductById(id);
 
                 let stock = null;
                 try {
-                    stock = await getProductStock(id);
+                    stock = await getProductStockBalance(id);
                 } catch (stockError) {
                     console.error("Error loading product stock:", stockError);
                 }
+
+                const availableQuantity =
+                stock?.availableQuantity ??
+                data.availableQuantity ??
+                data.quantity ??
+                0;
+
+                const reservedQuantity =
+                stock?.reservedQuantity ??
+                data.reservedQuantity ??
+                0;
 
                 setFormData({
                     sku: data.sku || "",
                     name: data.name || "",
                     description: data.description || "",
                     price: data.price || "",
-                    quantity: data.availableQuantity ?? data.quantity ?? "",
+                    quantity: availableQuantity,
                     adjustmentQuantity: "",
                     adjustmentReferenceId: "",
                     unit: data.unit || "",
                     type: data.type || "SCREW",
                     active: data.active !== false
                 });
+
                 setStockData({
-                    availableQuantity: Number(stock?.availableQuantity ?? data.availableQuantity ?? data.quantity ?? 0),
-                    reservedQuantity: Number(stock?.reservedQuantity ?? data.reservedQuantity ?? 0)
+                    availableQuantity,
+                    reservedQuantity
                 });
             } catch (error) {
                 console.error("Error loading product:", error);
@@ -74,6 +102,7 @@ function ProductFormPage() {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+
         setFormData((prev) => ({
             ...prev,
             [name]: value
@@ -102,13 +131,14 @@ function ProductFormPage() {
                 });
 
                 const adjustmentQuantity = Number(formData.adjustmentQuantity || 0);
+
                 if (adjustmentQuantity !== 0) {
                     await executeStockAction(
                         adjustmentQuantity > 0 ? STOCK_ACTIONS.ADD : STOCK_ACTIONS.REMOVE,
                         id,
                         {
                             quantity: Math.abs(adjustmentQuantity),
-                            referenceId: formData.adjustmentReferenceId
+                            referenceId: formData.adjustmentReferenceId || null
                         }
                     );
                 }
@@ -214,6 +244,7 @@ function ProductFormPage() {
                                 />
                             </div>
                         )}
+
                         <div className="col-md-3">
                             <label className="form-label">Unit</label>
                             <input
@@ -235,9 +266,11 @@ function ProductFormPage() {
                                 onChange={handleChange}
                                 required
                             >
-                                <option value="SCREW">Screw</option>
-                                <option value="STEEL_SHEET">Steel Sheet</option>
-                                <option value="STAINLESS_STEEL_SHEET">Stainless Steel Sheet</option>
+                                {PRODUCT_TYPES.map((type) => (
+                                    <option key={type} value={type}>
+                                        {type}
+                                    </option>
+                                ))}
                             </select>
                         </div>
 
@@ -248,27 +281,29 @@ function ProductFormPage() {
                                     className="form-select"
                                     name="active"
                                     value={String(formData.active)}
-                                    onChange={(e) => {
+                                    onChange={(e) =>
                                         setFormData((prev) => ({
                                             ...prev,
                                             active: e.target.value === "true"
-                                        }));
-                                    }}
+                                        }))
+                                    }
                                     required
                                 >
                                     <option value="true">Active</option>
                                     <option value="false">Inactive</option>
                                 </select>
-                                <small className="text-muted">Set to Active to reactivate the product.</small>
+                                <small className="text-muted">
+                                    Set to Active to reactivate the product.
+                                </small>
                             </div>
                         )}
 
                         {isEditMode && (
                             <>
                                 <div className="col-12 mt-3">
-                                    <h5 className="mb-2">Quantity</h5>
+                                    <h5 className="mb-2">Stock Quantity</h5>
                                     <p className="text-muted mb-0">
-                                        Use a positive value to add stock and a negative value to remove stock for inventory adjustment.
+                                        Use a positive value to add stock and a negative value to remove stock.
                                     </p>
                                 </div>
 
@@ -307,7 +342,7 @@ function ProductFormPage() {
                                 </div>
 
                                 <div className="col-md-3">
-                                    <label className="form-label">Adjustment Reference ID</label>
+                                    <label className="form-label">Reference ID</label>
                                     <input
                                         type="text"
                                         className="form-control"
@@ -325,6 +360,7 @@ function ProductFormPage() {
                         <button type="submit" className="btn btn-success me-2" disabled={loading}>
                             {loading ? "Saving..." : isEditMode ? "Update Product" : "Save Product"}
                         </button>
+
                         <Link to="/products" className="btn btn-outline-secondary">
                             Cancel
                         </Link>

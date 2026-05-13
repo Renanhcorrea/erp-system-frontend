@@ -1,0 +1,131 @@
+name: CI - ERP Frontend
+
+on:
+  # Trigger CI on pushes to main and feature branches
+  push:
+    branches: ["main"]
+
+  # Trigger CI on pull requests targeting main
+  pull_request:
+    branches: [ "main" ]
+
+  # Allows manual execution from GitHub Actions tab
+  workflow_dispatch:
+
+  # Nightly scheduled validation
+  schedule:
+    - cron: '0 2 * * *'
+
+# Prevent duplicate runs on the same branch
+concurrency:
+  group: ci-frontend-${{ github.ref }}
+  cancel-in-progress: true
+
+# A workflow run is made up of one or more jobs
+jobs:
+
+  # Lint validation job
+  lint:
+    name: Run Lint
+    # Use Ubuntu latest runner provided by GitHub
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout repository code
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      # Step 2: Set up Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      # Step 3: Install project dependencies
+      - name: Install dependencies
+        run: npm ci
+
+      # Step 4: Run ESLint validation
+      - name: Run ESLint
+        run: npm run lint
+
+  # Build validation job
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+
+    # Runs only if lint passes
+    needs: lint
+
+    steps:
+      # Step 1: Checkout repository code
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      # Step 2: Set up Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      # Step 3: Install project dependencies
+      - name: Install dependencies
+        run: npm ci
+
+      # Step 4: Build frontend application
+      - name: Build frontend
+        run: npm run build
+
+      # Step 5: Upload build artifact for future use
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: erp-frontend-dist
+          path: dist/
+
+  # Security validation job
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    # Runs only if build passes
+    needs: build
+
+    steps:
+      # Step 1: Checkout repository code
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      # Step 2: Set up Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      # Step 3: Install project dependencies
+      - name: Install dependencies
+        run: npm ci
+
+      # Step 4: Run dependency vulnerability scan
+      # '|| true' prevents pipeline failure during gradual adoption
+      - name: Audit dependencies
+        run: npm audit --audit-level=high || true
+
+  # Notification job on pipeline failure
+  notify:
+    name: Notify on Failure
+    runs-on: ubuntu-latest
+
+    # Wait for all previous jobs
+    needs: [ lint, build, security ]
+
+    # Execute only if pipeline fails
+    if: failure()
+
+    steps:
+      # Step 1: Display failure notification
+      - name: Pipeline failed
+        run: echo "Frontend CI pipeline failed"

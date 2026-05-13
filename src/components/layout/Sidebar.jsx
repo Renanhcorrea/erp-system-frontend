@@ -9,6 +9,7 @@ const ALL_MENU_ITEMS = [
     { label: "Sales",      path: "/sales",       icon: "bi-bag-check",    section: "sales"      },
     { label: "Suppliers",  path: "/suppliers",   icon: "bi-truck",        section: "suppliers"  },
     { label: "Finance",    path: "/finance",     icon: "bi-cash-stack",   section: "finance"    },
+    { label: "Work Centers", path: "/work-centers", icon: "bi-building",    section: "work-centers" },
     { label: "Users",      path: "/users",       icon: "bi-people",       section: "users"      },
     { label: "Settings",   path: "/settings",    icon: "bi-gear",         section: "settings"   }
 ];

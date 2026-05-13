@@ -1,0 +1,69 @@
+name: CD - ERP Frontend
+
+on:
+  # Trigger deployment only on pushes to main
+  push:
+    branches: [ "main" ]
+
+  # Allows manual execution from GitHub Actions tab
+  workflow_dispatch:
+
+# Prevent duplicate deployments on the same branch
+concurrency:
+  group: cd-frontend-pages-${{ github.ref }}
+  cancel-in-progress: true
+
+# Required permissions for GitHub Pages deployment
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Deployment job
+jobs:
+
+  deploy:
+    name: Deploy to GitHub Pages
+
+    # Use Ubuntu latest runner provided by GitHub
+    runs-on: ubuntu-latest
+
+    # Configure GitHub Pages environment
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      # Step 1: Checkout repository code
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      # Step 2: Set up Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      # Step 3: Install project dependencies
+      - name: Install dependencies
+        run: npm ci
+
+      # Step 4: Build frontend application
+      - name: Build frontend
+        run: npm run build
+
+      # Step 5: Configure GitHub Pages
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
+
+      # Step 6: Upload generated dist folder
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+      # Step 7: Deploy application to GitHub Pages
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
