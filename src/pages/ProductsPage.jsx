@@ -71,6 +71,7 @@ function ProductsPage() {
             if (debouncedFilters.name.trim()) filters.name = debouncedFilters.name.trim();
             if (debouncedFilters.type) filters.type = debouncedFilters.type;
             if (debouncedFilters.unit.trim()) filters.unit = debouncedFilters.unit.trim();
+
             if (debouncedFilters.active !== "") {
                 filters.active = debouncedFilters.active === "true";
             }
@@ -93,14 +94,14 @@ function ProductsPage() {
         } finally {
             setLoading(false);
         }
-    }, [
-        currentPage,
-        pageSize,
-        debouncedFilters 
-    ]);
+    }, [currentPage, pageSize, debouncedFilters]);
 
     useEffect(() => {
-        loadProducts();
+        const timer = setTimeout(() => {
+            void loadProducts();
+        }, 0);
+
+        return () => clearTimeout(timer);
     }, [loadProducts]);
 
     const updateFilter = (setter) => (e) => {
@@ -157,8 +158,8 @@ function ProductsPage() {
         } catch (requestError) {
             console.error("Error deleting product:", requestError);
             setError(getFriendlyApiError(requestError, "Failed to delete product."));
-            }
-        };
+        }
+    };
 
     return (
         <div className="container mt-5">
@@ -245,102 +246,115 @@ function ProductsPage() {
                 </div>
             </div>
 
-            {products.length === 0 ? (
-                <p className="text-muted">No products found.</p>
-            ) : (
-                <>
-                    <div className="table-responsive">
-                        <table className="table table-striped table-bordered align-middle products-table">
-                            <thead className="table-dark">
-                                <tr>
-                                    <th className="col-id">ID</th>
-                                    <th className="col-sku">SKU</th>
-                                    <th className="col-name">Name</th>
-                                    <th className="col-price">Price</th>
-                                    <th className="col-quantity">Quantity</th>
-                                    <th className="col-unit">Unit</th>
-                                    <th className="col-type">Type</th>
-                                    <th className="col-status">Status</th>
-                                    <th className="col-actions">Actions</th>
+            {/* CHANGE: table is always visible; loading appears inside the table */}
+            <div className="table-responsive">
+                <table className="table table-striped table-bordered align-middle products-table">
+                    <thead className="table-dark">
+                        <tr>
+                            <th className="col-id">ID</th>
+                            <th className="col-sku">SKU</th>
+                            <th className="col-name">Name</th>
+                            <th className="col-price">Price</th>
+                            <th className="col-quantity">Quantity</th>
+                            <th className="col-unit">Unit</th>
+                            <th className="col-type">Type</th>
+                            <th className="col-status">Status</th>
+                            <th className="col-actions">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {loading ? (
+                            <tr>
+                                <td colSpan="9" className="text-center py-4">
+                                    ⏳ Loading products...
+                                </td>
+                            </tr>
+                        ) : products.length === 0 ? (
+                            <tr>
+                                <td colSpan="9" className="text-center text-muted py-4">
+                                    No products found.
+                                </td>
+                            </tr>
+                        ) : (
+                            products.map((product) => (
+                                <tr key={product.id}>
+                                    <td className="col-id">{product.id}</td>
+                                    <td className="col-sku">{product.sku || "-"}</td>
+                                    <td className="col-name">{product.name}</td>
+
+                                    <td className="col-price">
+                                        €{Number(product.price ?? 0).toFixed(2)}
+                                    </td>
+
+                                    {/* CHANGE: use availableQuantity first, then old quantity */}
+                                    <td className="col-quantity">
+                                        {product.availableQuantity ?? product.quantity ?? 0}
+                                    </td>
+
+                                    <td className="col-unit">{product.unit}</td>
+                                    <td className="col-type">{product.type}</td>
+
+                                    <td className="col-status">
+                                        <span
+                                            className={`badge ${
+                                                product.active ? "bg-success" : "bg-secondary"
+                                            }`}
+                                        >
+                                            {product.active ? "Active" : "Inactive"}
+                                        </span>
+                                    </td>
+
+                                    <td className="col-actions">
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-warning me-2"
+                                            onClick={() => navigate(`/products/edit/${product.id}`)}
+                                        >
+                                            Edit
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-danger"
+                                            onClick={() => handleDelete(product.id, product.name)}
+                                        >
+                                            Delete
+                                        </button>
+                                    </td>
                                 </tr>
-                            </thead>
+                            ))
+                        )}
+                    </tbody>
+                </table>
+            </div>
 
-                            <tbody>
-                                {products.map((product) => (
-                                    <tr key={product.id}>
-                                        <td className="col-id">{product.id}</td>
-                                        <td className="col-sku">{product.sku || "-"}</td>
-                                        <td className="col-name">{product.name}</td>
-                                        <td className="col-price">
-                                            €{Number(product.price ?? 0).toFixed(2)}
-                                        </td>
+            <div className="d-flex justify-content-between align-items-center mt-4">
+                <small className="text-muted">
+                    Page {totalPages === 0 ? 0 : currentPage + 1} of {totalPages} —{" "}
+                    {totalElements} total
+                </small>
 
-                                        <td className="col-quantity">
-                                            {product.availableQuantity ?? product.quantity ?? 0}
-                                        </td>
+                <div className="btn-group">
+                    <button
+                        type="button"
+                        className="btn btn-outline-secondary"
+                        onClick={handlePreviousPage}
+                        disabled={loading || currentPage === 0}
+                    >
+                        ← Previous
+                    </button>
 
-                                        <td className="col-unit">{product.unit}</td>
-                                        <td className="col-type">{product.type}</td>
-                                        <td className="col-status">
-                                            <span
-                                                className={`badge ${
-                                                    product.active ? "bg-success" : "bg-secondary"
-                                                }`}
-                                            >
-                                                {product.active ? "Active" : "Inactive"}
-                                            </span>
-                                        </td>
-                                        <td className="col-actions">
-                                            <button
-                                                type="button"
-                                                className="btn btn-sm btn-warning me-2"
-                                                onClick={() => navigate(`/products/edit/${product.id}`)}
-                                            >
-                                                Edit
-                                            </button>
-
-                                            <button
-                                                type="button"
-                                                className="btn btn-sm btn-danger"
-                                                onClick={() => handleDelete(product.id, product.name)}
-                                            >
-                                                Delete
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div className="d-flex justify-content-between align-items-center mt-4">
-                        <small className="text-muted">
-                            Page {totalPages === 0 ? 0 : currentPage + 1} of {totalPages} —{" "}
-                            {totalElements} total
-                        </small>
-
-                        <div className="btn-group">
-                            <button
-                                type="button"
-                                className="btn btn-outline-secondary"
-                                onClick={handlePreviousPage}
-                                disabled={currentPage === 0}
-                            >
-                                ← Previous
-                            </button>
-
-                            <button
-                                type="button"
-                                className="btn btn-outline-secondary"
-                                onClick={handleNextPage}
-                                disabled={currentPage + 1 >= totalPages}
-                            >
-                                Next →
-                            </button>
-                        </div>
-                    </div>
-                </>
-            )}
+                    <button
+                        type="button"
+                        className="btn btn-outline-secondary"
+                        onClick={handleNextPage}
+                        disabled={loading || currentPage + 1 >= totalPages}
+                    >
+                        Next →
+                    </button>
+                </div>
+            </div>
         </div>
     );
 }

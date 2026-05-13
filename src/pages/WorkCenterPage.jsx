@@ -23,7 +23,7 @@ function formatDate(value) {
 function WorkCenterPage() {
     const [workCenters, setWorkCenters] = useState([]);
     const [currentPage, setCurrentPage] = useState(0);
-    const [pageSize, setPageSize] = useState(PAGE_SIZE);
+    const [pageSize] = useState(PAGE_SIZE);
     const [totalPages, setTotalPages] = useState(0);
     const [totalElements, setTotalElements] = useState(0);
 
@@ -62,7 +62,11 @@ function WorkCenterPage() {
     }, [currentPage, pageSize]);
 
     useEffect(() => {
-        loadWorkCenters();
+        const timer = setTimeout(() => {
+            void loadWorkCenters();
+        }, 0);
+
+        return () => clearTimeout(timer);
     }, [loadWorkCenters]);
 
     // ── Actions ───────────────────────────────────────────────────────────────

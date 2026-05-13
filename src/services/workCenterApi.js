@@ -1,5 +1,4 @@
 import api from "./api";
-import { getFriendlyApiError } from "./api";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
