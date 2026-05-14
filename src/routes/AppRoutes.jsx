@@ -13,6 +13,8 @@ import FinancePage from "../pages/FinancePage";
 import SettingsPage from "../pages/SettingsPage";
 import WorkCenterPage from "../pages/WorkCenterPage";
 import WorkCenterFormPage from "../pages/WorkCenterFormPage";
+import ProductRoutingPage from "../pages/ProductRoutingPage";
+import ProductRoutingFormPage from "../pages/ProductRoutingFormPage";
 
 function AppRoutes() {
     return (
@@ -48,6 +50,10 @@ function AppRoutes() {
                     <Route path="/work-centers" element={<ProtectedRoute section="work-centers"><WorkCenterPage /></ProtectedRoute>} />
                     <Route path="/work-centers/new" element={<ProtectedRoute section="work-centers"><WorkCenterFormPage /></ProtectedRoute>} />
                     <Route path="/work-centers/:id/edit" element={<ProtectedRoute section="work-centers"><WorkCenterFormPage /></ProtectedRoute>} />
+
+                    <Route path="/product-routings" element={<ProtectedRoute section="products"><ProductRoutingPage /></ProtectedRoute>} />
+                    <Route path="/product-routings/new" element={<ProtectedRoute section="products"><ProductRoutingFormPage /></ProtectedRoute>} />
+                    <Route path="/product-routings/:id/edit" element={<ProtectedRoute section="products"><ProductRoutingFormPage /></ProtectedRoute>} />
 
                 </Route>
             </Routes>

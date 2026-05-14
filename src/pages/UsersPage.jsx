@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { deleteUser, searchUsers } from "../services/userService";
+import useResizableColumns from "../hooks/useResizableColumns";
 
 const INITIAL_FILTERS = {
     userName: "",
@@ -10,6 +11,17 @@ const INITIAL_FILTERS = {
     email: "",
     status: "",
     keyword: ""
+};
+
+const INITIAL_COLUMN_WIDTHS = {
+    id: 80,
+    firstName: 150,
+    surname: 150,
+    email: 240,
+    phone: 140,
+    role: 120,
+    status: 120,
+    actions: 170
 };
 
 function UsersPage() {
@@ -28,6 +40,7 @@ function UsersPage() {
     const [error, setError] = useState(null);
 
     const navigate = useNavigate();
+    const { getColumnStyle, getResizeHandleProps } = useResizableColumns(INITIAL_COLUMN_WIDTHS);
 
     const fetchUsers = async (page = 0, currentFilters = appliedFilters) => {
         try {
@@ -293,31 +306,31 @@ function UsersPage() {
                     <table className="table table-striped table-bordered align-middle">
                         <thead className="table-dark">
                             <tr>
-                                <th>ID</th>
-                                <th>First Name</th>
-                                <th>Surname</th>
-                                <th>Email</th>
-                                <th>Phone</th>
-                                <th>Role</th>
-                                <th>Status</th>
-                                <th style={{ minWidth: "160px" }}>Actions</th>
+                                <th className="resizable-th" style={getColumnStyle("id")}>ID<span {...getResizeHandleProps("id")} /></th>
+                                <th className="resizable-th" style={getColumnStyle("firstName")}>First Name<span {...getResizeHandleProps("firstName")} /></th>
+                                <th className="resizable-th" style={getColumnStyle("surname")}>Surname<span {...getResizeHandleProps("surname")} /></th>
+                                <th className="resizable-th" style={getColumnStyle("email")}>Email<span {...getResizeHandleProps("email")} /></th>
+                                <th className="resizable-th" style={getColumnStyle("phone")}>Phone<span {...getResizeHandleProps("phone")} /></th>
+                                <th className="resizable-th" style={getColumnStyle("role")}>Role<span {...getResizeHandleProps("role")} /></th>
+                                <th className="resizable-th" style={getColumnStyle("status")}>Status<span {...getResizeHandleProps("status")} /></th>
+                                <th className="resizable-th" style={getColumnStyle("actions")}>Actions<span {...getResizeHandleProps("actions")} /></th>
                             </tr>
                         </thead>
                         <tbody>
                             {filteredUsers.map((user) => (
                                 <tr key={user.id}>
-                                    <td>{user.id}</td>
-                                    <td>{user.userName}</td>
-                                    <td>{user.userSurname}</td>
-                                    <td>{user.email}</td>
-                                    <td>{user.phoneNumber}</td>
-                                    <td>{user.role}</td>
-                                    <td>
+                                    <td style={getColumnStyle("id")}>{user.id}</td>
+                                    <td style={getColumnStyle("firstName")}>{user.userName}</td>
+                                    <td style={getColumnStyle("surname")}>{user.userSurname}</td>
+                                    <td style={getColumnStyle("email")}>{user.email}</td>
+                                    <td style={getColumnStyle("phone")}>{user.phoneNumber}</td>
+                                    <td style={getColumnStyle("role")}>{user.role}</td>
+                                    <td style={getColumnStyle("status")}>
                                         <span className={`badge ${user.active ? "bg-success" : "bg-secondary"}`}>
                                             {user.active ? "Active" : "Inactive"}
                                         </span>
                                     </td>
-                                    <td>
+                                    <td style={getColumnStyle("actions")}>
                                         <button
                                             className="btn btn-sm btn-warning me-2"
                                             onClick={() => navigate(`/users/edit/${user.id}`)}

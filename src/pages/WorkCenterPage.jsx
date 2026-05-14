@@ -2,9 +2,18 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getAllWorkCenters, deleteWorkCenter } from "../services/workCenterApi";
 import { getFriendlyApiError } from "../services/api";
+import useResizableColumns from "../hooks/useResizableColumns";
 
 const PROCESS_TYPES = ["CUTTING", "BENDING", "WELDING", "PAINTING", "ASSEMBLY", "PACKAGING"];
 const PAGE_SIZE = 10;
+const INITIAL_COLUMN_WIDTHS = {
+    id: 80,
+    name: 220,
+    processType: 180,
+    status: 120,
+    createdAt: 160,
+    actions: 170
+};
 
 // Spring Boot can serialize LocalDateTime as ISO string or as an array [y,M,d,H,m,s,ns]
 function formatDate(value) {
@@ -21,6 +30,7 @@ function formatDate(value) {
 }
 
 function WorkCenterPage() {
+    const { getColumnStyle, getResizeHandleProps } = useResizableColumns(INITIAL_COLUMN_WIDTHS);
     const [workCenters, setWorkCenters] = useState([]);
     const [currentPage, setCurrentPage] = useState(0);
     const [pageSize] = useState(PAGE_SIZE);
@@ -113,7 +123,7 @@ function WorkCenterPage() {
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h1>Work Centers</h1>
                 <Link to="/work-centers/new" className="btn btn-primary">
-                    <i className="bi bi-plus-lg"></i> New Work Center
+                    Add New Work Center
                 </Link>
             </div>
 
@@ -132,37 +142,49 @@ function WorkCenterPage() {
             )}
 
             {/* Filters */}
-            <div className="row mb-4">
-                <div className="col-md-6">
-                    <label htmlFor="filterProcessType" className="form-label">
-                        Filter by Process Type
-                    </label>
-                    <select
-                        id="filterProcessType"
-                        className="form-select"
-                        value={filterProcessType}
-                        onChange={(e) => setFilterProcessType(e.target.value)}
-                    >
-                        <option value="">All Process Types</option>
-                        {PROCESS_TYPES.map((t) => (
-                            <option key={t} value={t}>{t}</option>
-                        ))}
-                    </select>
-                </div>
-                <div className="col-md-6">
-                    <label htmlFor="filterActive" className="form-label">
-                        Filter by Status
-                    </label>
-                    <select
-                        id="filterActive"
-                        className="form-select"
-                        value={filterActive}
-                        onChange={(e) => setFilterActive(e.target.value)}
-                    >
-                        <option value="">All</option>
-                        <option value="true">Active</option>
-                        <option value="false">Inactive</option>
-                    </select>
+            <div className="card p-3 mb-4">
+                <h5 className="mb-3">Filters</h5>
+
+                <div className="row g-3">
+                    <div className="col-md-5">
+                        <select
+                            id="filterProcessType"
+                            className="form-select"
+                            value={filterProcessType}
+                            onChange={(e) => setFilterProcessType(e.target.value)}
+                        >
+                            <option value="">All Process Types</option>
+                            {PROCESS_TYPES.map((t) => (
+                                <option key={t} value={t}>{t}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="col-md-5">
+                        <select
+                            id="filterActive"
+                            className="form-select"
+                            value={filterActive}
+                            onChange={(e) => setFilterActive(e.target.value)}
+                        >
+                            <option value="">All Status</option>
+                            <option value="true">Active</option>
+                            <option value="false">Inactive</option>
+                        </select>
+                    </div>
+
+                    <div className="col-md-2">
+                        <button
+                            type="button"
+                            className="btn btn-outline-secondary w-100"
+                            onClick={() => {
+                                setFilterProcessType("");
+                                setFilterActive("");
+                            }}
+                        >
+                            Clear
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -172,45 +194,47 @@ function WorkCenterPage() {
             ) : (
                 <>
                     <div className="table-responsive">
-                        <table className="table table-hover align-middle">
-                        <thead className="table-light">
+                        <table className="table table-striped table-bordered align-middle">
+                        <thead className="table-dark">
                             <tr>
-                                <th>Name</th>
-                                <th>Process Type</th>
-                                <th>Status</th>
-                                <th>Created At</th>
-                                <th>Actions</th>
+                                <th className="resizable-th" style={getColumnStyle("id")}>ID<span {...getResizeHandleProps("id")} /></th>
+                                <th className="resizable-th" style={getColumnStyle("name")}>Name<span {...getResizeHandleProps("name")} /></th>
+                                <th className="resizable-th" style={getColumnStyle("processType")}>Process Type<span {...getResizeHandleProps("processType")} /></th>
+                                <th className="resizable-th" style={getColumnStyle("status")}>Status<span {...getResizeHandleProps("status")} /></th>
+                                <th className="resizable-th" style={getColumnStyle("createdAt")}>Created At<span {...getResizeHandleProps("createdAt")} /></th>
+                                <th className="resizable-th" style={getColumnStyle("actions")}>Actions<span {...getResizeHandleProps("actions")} /></th>
                             </tr>
                         </thead>
                         <tbody>
                             {displayedWorkCenters.map((center) => (
                                 <tr key={center.id}>
-                                    <td><strong>{center.name}</strong></td>
-                                    <td>
+                                    <td style={getColumnStyle("id")}>{center.id}</td>
+                                    <td style={getColumnStyle("name")}><strong>{center.name}</strong></td>
+                                    <td style={getColumnStyle("processType")}>
                                         <span className="badge bg-secondary">
                                             {center.processType}
                                         </span>
                                     </td>
-                                    <td>
+                                    <td style={getColumnStyle("status")}>
                                         <span className={`badge bg-${center.active ? "success" : "danger"}`}>
                                             {center.active ? "Active" : "Inactive"}
                                         </span>
                                     </td>
-                                    <td>
+                                    <td style={getColumnStyle("createdAt")}>
                                         {formatDate(center.createdAt)}
                                     </td>
-                                    <td>
+                                    <td style={getColumnStyle("actions")}>
                                         <Link
                                             to={`/work-centers/${center.id}/edit`}
                                             className="btn btn-sm btn-warning me-2"
                                         >
-                                            <i className="bi bi-pencil"></i> Edit
+                                            Edit
                                         </Link>
                                         <button
                                             className="btn btn-sm btn-danger"
                                             onClick={() => handleDelete(center.id, center.name)}
                                         >
-                                            <i className="bi bi-trash"></i> Delete
+                                            Delete
                                         </button>
                                     </td>
                                 </tr>
@@ -230,14 +254,14 @@ function WorkCenterPage() {
                                 onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
                                 disabled={currentPage === 0}
                             >
-                                ← Previous
+                                Previous
                             </button>
                             <button
                                 className="btn btn-outline-secondary"
                                 onClick={() => setCurrentPage((p) => p + 1)}
                                 disabled={currentPage + 1 >= totalPages}
                             >
-                                Next →
+                                Next
                             </button>
                         </div>
                     </div>
