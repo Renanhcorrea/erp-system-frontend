@@ -284,6 +284,37 @@ body {
   background: var(--erp-surface);
 }
 
+.erp-content .resizable-th {
+  position: relative;
+}
+
+.erp-content .resizable-column-handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 10px;
+  height: 100%;
+  cursor: col-resize;
+  user-select: none;
+  touch-action: none;
+}
+
+.erp-content .resizable-column-handle::after {
+  content: "";
+  position: absolute;
+  top: 20%;
+  bottom: 20%;
+  right: 4px;
+  width: 1px;
+  background: var(--erp-border-strong);
+  opacity: 0;
+}
+
+.erp-content .resizable-th:hover .resizable-column-handle::after,
+.erp-content .resizable-column-handle:hover::after {
+  opacity: 1;
+}
+
 .erp-content .btn {
   border-radius: 2px;
   font-weight: 600;

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { deleteProduct, getAllProducts } from "../services/productService";
 import { getFriendlyApiError } from "../services/api";
+import useResizableColumns from "../hooks/useResizableColumns";
 
 const PRODUCT_TYPES = [
     "SCREW",
@@ -17,9 +18,21 @@ const PRODUCT_TYPES = [
 ];
 
 const PAGE_SIZE = 10;
+const INITIAL_COLUMN_WIDTHS = {
+    id: 60,
+    sku: 100,
+    name: 200,
+    price: 80,
+    quantity: 80,
+    unit: 60,
+    type: 80,
+    status: 60,
+    actions: 120
+};
 
 function ProductsPage() {
     const navigate = useNavigate();
+    const { getColumnStyle, getResizeHandleProps } = useResizableColumns(INITIAL_COLUMN_WIDTHS);
 
     const [products, setProducts] = useState([]);
     const [currentPage, setCurrentPage] = useState(0);
@@ -251,15 +264,15 @@ function ProductsPage() {
                 <table className="table table-striped table-bordered align-middle products-table">
                     <thead className="table-dark">
                         <tr>
-                            <th className="col-id">ID</th>
-                            <th className="col-sku">SKU</th>
-                            <th className="col-name">Name</th>
-                            <th className="col-price">Price</th>
-                            <th className="col-quantity">Quantity</th>
-                            <th className="col-unit">Unit</th>
-                            <th className="col-type">Type</th>
-                            <th className="col-status">Status</th>
-                            <th className="col-actions">Actions</th>
+                            <th className="col-id resizable-th" style={getColumnStyle("id")}>ID<span {...getResizeHandleProps("id")} /></th>
+                            <th className="col-sku resizable-th" style={getColumnStyle("sku")}>SKU<span {...getResizeHandleProps("sku")} /></th>
+                            <th className="col-name resizable-th" style={getColumnStyle("name")}>Name<span {...getResizeHandleProps("name")} /></th>
+                            <th className="col-price resizable-th" style={getColumnStyle("price")}>Price<span {...getResizeHandleProps("price")} /></th>
+                            <th className="col-quantity resizable-th" style={getColumnStyle("quantity")}>Quantity<span {...getResizeHandleProps("quantity")} /></th>
+                            <th className="col-unit resizable-th" style={getColumnStyle("unit")}>Unit<span {...getResizeHandleProps("unit")} /></th>
+                            <th className="col-type resizable-th" style={getColumnStyle("type")}>Type<span {...getResizeHandleProps("type")} /></th>
+                            <th className="col-status resizable-th" style={getColumnStyle("status")}>Status<span {...getResizeHandleProps("status")} /></th>
+                            <th className="col-actions resizable-th" style={getColumnStyle("actions")}>Actions<span {...getResizeHandleProps("actions")} /></th>
                         </tr>
                     </thead>
 
@@ -279,23 +292,23 @@ function ProductsPage() {
                         ) : (
                             products.map((product) => (
                                 <tr key={product.id}>
-                                    <td className="col-id">{product.id}</td>
-                                    <td className="col-sku">{product.sku || "-"}</td>
-                                    <td className="col-name">{product.name}</td>
+                                    <td className="col-id" style={getColumnStyle("id")}>{product.id}</td>
+                                    <td className="col-sku" style={getColumnStyle("sku")}>{product.sku || "-"}</td>
+                                    <td className="col-name" style={getColumnStyle("name")}>{product.name}</td>
 
-                                    <td className="col-price">
+                                    <td className="col-price" style={getColumnStyle("price")}>
                                         €{Number(product.price ?? 0).toFixed(2)}
                                     </td>
 
                                     {/* CHANGE: use availableQuantity first, then old quantity */}
-                                    <td className="col-quantity">
+                                    <td className="col-quantity" style={getColumnStyle("quantity")}>
                                         {product.availableQuantity ?? product.quantity ?? 0}
                                     </td>
 
-                                    <td className="col-unit">{product.unit}</td>
-                                    <td className="col-type">{product.type}</td>
+                                    <td className="col-unit" style={getColumnStyle("unit")}>{product.unit}</td>
+                                    <td className="col-type" style={getColumnStyle("type")}>{product.type}</td>
 
-                                    <td className="col-status">
+                                    <td className="col-status" style={getColumnStyle("status")}>
                                         <span
                                             className={`badge ${
                                                 product.active ? "bg-success" : "bg-secondary"
@@ -305,7 +318,7 @@ function ProductsPage() {
                                         </span>
                                     </td>
 
-                                    <td className="col-actions">
+                                    <td className="col-actions" style={getColumnStyle("actions")}>
                                         <button
                                             type="button"
                                             className="btn btn-sm btn-warning me-2"
