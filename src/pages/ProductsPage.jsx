@@ -19,7 +19,7 @@ const PRODUCT_TYPES = [
 
 const PAGE_SIZE = 10;
 const INITIAL_COLUMN_WIDTHS = {
-    id: 40,
+    id: 60,
     sku: 100,
     name: 200,
     price: 80,

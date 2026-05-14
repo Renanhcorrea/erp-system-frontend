@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const DEFAULT_MIN_WIDTH = 80;
+const DEFAULT_MIN_WIDTH = 60;
+const DEFAULT_MAX_WIDTH = 200;
 
 export default function useResizableColumns(initialWidths, minWidth = DEFAULT_MIN_WIDTH) {
     const [columnWidths, setColumnWidths] = useState(initialWidths);
     const resizeStateRef = useRef(null);
 
-    const handleMouseMove = useCallback(
+    const handlePointerMove = useCallback(
         (event) => {
             const state = resizeStateRef.current;
             if (!state) return;
@@ -24,23 +25,20 @@ export default function useResizableColumns(initialWidths, minWidth = DEFAULT_MI
 
     const stopResizing = useCallback(() => {
         resizeStateRef.current = null;
-        window.removeEventListener("mousemove", handleMouseMove);
-    }, [handleMouseMove]);
+        window.removeEventListener("pointermove", handlePointerMove);
+    }, [handlePointerMove]);
 
     useEffect(() => {
         return () => {
-            window.removeEventListener("mousemove", handleMouseMove);
-            window.removeEventListener("mouseup", stopResizing);
+            window.removeEventListener("pointermove", handlePointerMove);
+            window.removeEventListener("pointerup", stopResizing);
+            window.removeEventListener("pointercancel", stopResizing);
         };
-    }, [handleMouseMove, stopResizing]);
+    }, [handlePointerMove, stopResizing]);
 
     const getColumnStyle = useCallback(
         (columnKey) => {
-            const width = columnWidths[columnKey];
-
-            if (!width) {
-                return { minWidth };
-            }
+            const width = columnWidths[columnKey] ?? minWidth;
 
             return {
                 width,
@@ -53,7 +51,7 @@ export default function useResizableColumns(initialWidths, minWidth = DEFAULT_MI
     const getResizeHandleProps = useCallback(
         (columnKey) => ({
             className: "resizable-column-handle",
-            onMouseDown: (event) => {
+            onPointerDown: (event) => {
                 event.preventDefault();
                 event.stopPropagation();
 
@@ -66,14 +64,17 @@ export default function useResizableColumns(initialWidths, minWidth = DEFAULT_MI
                     startWidth
                 };
 
-                window.addEventListener("mousemove", handleMouseMove);
-                window.addEventListener("mouseup", stopResizing, { once: true });
+                event.currentTarget.setPointerCapture?.(event.pointerId);
+
+                window.addEventListener("pointermove", handlePointerMove);
+                window.addEventListener("pointerup", stopResizing, { once: true });
+                window.addEventListener("pointercancel", stopResizing, { once: true });
             },
             role: "separator",
             "aria-orientation": "vertical",
             "aria-label": `Resize ${columnKey} column`
         }),
-        [columnWidths, handleMouseMove, minWidth, stopResizing]
+        [columnWidths, handlePointerMove, minWidth, stopResizing]
     );
 
     return {
@@ -81,4 +82,4 @@ export default function useResizableColumns(initialWidths, minWidth = DEFAULT_MI
         getColumnStyle,
         getResizeHandleProps
     };
-}
+}   

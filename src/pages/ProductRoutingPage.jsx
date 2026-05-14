@@ -9,12 +9,12 @@ import {
 
 const PAGE_SIZE = 10;
 const INITIAL_COLUMN_WIDTHS = {
-    id: 20,
-    productName: 220,
+    id: 60,
+    productName: 200,
     version: 120,
     status: 120,
     processes: 320,
-    actions: 50
+    actions: 60
 };
 
 function ProductRoutingPage() {
